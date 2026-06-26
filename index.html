@@ -1,4 +1,3 @@
-@@ -1,683 +1,787 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -320,7 +319,6 @@
 </div>
 
 <div class="wrap">
-  <div class="layout">
   <div class="layout" id="linksView">
     <nav class="cats">
       <div class="cats-title">Catégories</div>
@@ -591,7 +589,6 @@ function rowsToData(rows){
 }
 
 /* ============ rendu ============ */
-let DATA=[], activeCat='all', activePrice='all';
 let DATA=[], PROMPTS=[], activeCat='all', activePrice='all', activeView='links';
 
 const DEMO_PROMPTS = [
@@ -758,7 +755,6 @@ async function init(){
   renderMain();
 }
 
-document.getElementById('search').addEventListener('input',renderMain);
 document.getElementById('search').addEventListener('input',renderActive);
 document.querySelectorAll('#viewTabs button').forEach(b=>b.addEventListener('click',()=>{
   activeView=b.dataset.view;
