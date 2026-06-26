@@ -131,6 +131,28 @@
   .price-p{ color:#E8B23A; background:rgba(232,178,58,0.12); }
   .price-f{ color:#9aa3ad; background:rgba(255,255,255,0.05); }
 
+  /* ---------- VUE PROMPTS ---------- */
+  .view-tabs{ display:flex; gap:4px; background:var(--surface); border:1px solid var(--line); border-radius:9px; padding:3px; }
+  .view-tabs button{ cursor:pointer; border:none; background:transparent; color:var(--muted);
+    font-family:'Space Mono',monospace; font-size:12px; padding:6px 14px; border-radius:6px; transition:all .14s; }
+  .view-tabs button:hover{ color:var(--text); }
+  .view-tabs button.active{ color:var(--bg); background:var(--cyan); font-weight:700; }
+  .view-tabs button:focus-visible{ outline:2px solid var(--cyan); outline-offset:2px; }
+
+  #promptsView{ padding:30px 0 80px; }
+  .prompt-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:12px; }
+  .prompt-card{ background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; }
+  .prompt-head{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .prompt-title{ font-weight:600; font-size:14.5px; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .prompt-model{ font-family:'Space Mono',monospace; font-size:9.5px; color:var(--cyan); background:var(--cyan-soft); padding:2px 7px; border-radius:4px; flex:0 0 auto; }
+  .prompt-copy{ cursor:pointer; flex:0 0 auto; border:1px solid var(--line); background:var(--surface-2); color:var(--muted);
+    font-family:'Space Mono',monospace; font-size:11px; padding:4px 10px; border-radius:6px; transition:all .14s; }
+  .prompt-copy:hover{ color:var(--cyan); border-color:var(--cyan-line); }
+  .prompt-copy.done{ color:var(--bg); background:var(--cyan); border-color:var(--cyan); }
+  .prompt-text{ font-family:'Space Mono',monospace; font-size:12px; line-height:1.5; color:var(--text);
+    background:var(--bg); border:1px solid var(--line-soft); border-radius:8px; padding:11px 12px;
+    white-space:pre-wrap; word-break:break-word; max-height:170px; overflow:auto; margin:0; }
+
   /* ---------- DEMO BANNER ---------- */
   .demo-bar{
     background:linear-gradient(90deg, var(--cyan-soft), transparent);
@@ -259,6 +281,9 @@
   //    Laisse vide ("") pour rester en mode démo.
   const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRRjsxCuUOe8n-SWlelSWmYuSDcUHoizypp5UMyJ3QXCSO8w9xQqqTADBScTuR0uIxYlDV0M57GSj5T/pub?output=csv";
 
+  // 1bis) (optionnel) URL CSV d'un 2e onglet "Prompts" du même Sheet (publié en CSV).
+  const PROMPTS_CSV_URL = "";
+
   // 2) Le nom affiché en grand en haut.
   const SITE_NAME = "VAULT";
 
@@ -271,6 +296,10 @@
     <div class="brand">
       <span class="name" id="brandName">VAULT</span><span class="slash">//</span>
       <span class="tag" id="brandTag">tous nos liens, un seul endroit</span>
+    </div>
+    <div class="view-tabs" id="viewTabs" role="group" aria-label="Vue">
+      <button data-view="links" class="active">Liens</button>
+      <button data-view="prompts">Prompts</button>
     </div>
     <div class="search-box">
       <span class="caret">&gt;</span>
@@ -290,7 +319,7 @@
 </div>
 
 <div class="wrap">
-  <div class="layout">
+  <div class="layout" id="linksView">
     <nav class="cats">
       <div class="cats-title">Catégories</div>
       <div class="cat-list" id="catList"></div>
@@ -298,6 +327,9 @@
     <main id="main">
       <div class="state"><span class="pulse">█</span> chargement du vault…</div>
     </main>
+  </div>
+  <div id="promptsView" hidden>
+    <div id="promptsList"></div>
   </div>
 </div>
 
@@ -557,7 +589,14 @@ function rowsToData(rows){
 }
 
 /* ============ rendu ============ */
-let DATA=[], activeCat='all', activePrice='all';
+let DATA=[], PROMPTS=[], activeCat='all', activePrice='all', activeView='links';
+
+const DEMO_PROMPTS = [
+  ["Miniature — portrait dramatique","Cinematic close-up portrait, dramatic rim lighting, dark moody background, intense expression, high contrast, ultra sharp, 8k","Nano Banana Pro","Miniature"],
+  ["Fond — explosion de lumière","Abstract energy background, glowing cyan and orange light rays, floating particles, bokeh, dark base, dynamic, high detail","Nano Banana Pro","Fond"],
+  ["Détourage / sujet isolé","Subject isolated on a plain neutral background, soft studio lighting, clean crisp edges, centered, product-shot style","Gemini","Détourage"],
+  ["Style anime / cel shading","Anime style illustration, vibrant saturated colors, cel shading, dynamic pose, detailed background, studio quality","Midjourney","Style"],
+];
 
 function priceKind(px){ const p=(px||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
   if(p.startsWith('grat')||p==='free') return 'gratuit';
@@ -641,6 +680,49 @@ function updateStats(shown){
 function esc(s){ return (s+'').replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
 function escAttr(s){ return (s+'').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
 
+function rowsToPrompts(rows){
+  if(!rows.length) return [];
+  const norm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+  const head=rows[0].map(norm);
+  const find=(...n)=>{ for(const x of n){ const i=head.indexOf(x); if(i>=0) return i; } return -1; };
+  const ti=find('titre','title','nom','name'), pidx=find('prompt','texte','text');
+  const mi=find('modele','model','ia','ai'), ci=find('categorie','category','cat','usage');
+  const t=ti<0?0:ti, p=pidx<0?1:pidx, m=mi<0?2:mi, c=ci<0?3:ci;
+  const start=(ti>=0||pidx>=0)?1:0;
+  const out=[];
+  for(let i=start;i<rows.length;i++){ const r=rows[i];
+    const title=(r[t]||'').trim(), prompt=(r[p]||'').trim();
+    if(!prompt) continue;
+    out.push([title||'Sans titre', prompt, (r[m]||'').trim(), (r[c]||'').trim()]);
+  }
+  return out;
+}
+
+function renderActive(){ if(activeView==='prompts') renderPrompts(); else renderMain(); }
+
+function renderPrompts(){
+  const q=document.getElementById('search').value.trim().toLowerCase();
+  const cont=document.getElementById('promptsList');
+  let list=PROMPTS.slice();
+  if(q) list=list.filter(([t,p,m,cat])=>((t||'')+' '+(p||'')+' '+(m||'')+' '+(cat||'')).toLowerCase().includes(q));
+  if(!list.length){
+    cont.innerHTML=`<div class="state">aucune prompt${q?' pour « '+esc(q)+' »':''}.<br>ajoutes-en dans l'onglet <b>Prompts</b> de ton Sheet.</div>`;
+    return;
+  }
+  const groups=new Map();
+  list.forEach(it=>{ const c=it[3]||'Autres'; if(!groups.has(c)) groups.set(c,[]); groups.get(c).push(it); });
+  let html='';
+  for(const [c,items] of groups){
+    html+=`<section class="cat-section"><div class="cat-head"><span class="eyebrow">//</span><h2>${esc(c)}</h2><span class="num">${items.length}</span><span class="rule"></span></div><div class="prompt-grid">`;
+    items.forEach(([t,p,m])=>{
+      const model=m?`<span class="prompt-model">${esc(m)}</span>`:'';
+      html+=`<div class="prompt-card"><div class="prompt-head"><span class="prompt-title">${esc(t||'Sans titre')}</span>${model}<button class="prompt-copy" type="button">Copier</button></div><pre class="prompt-text">${esc(p||'')}</pre></div>`;
+    });
+    html+=`</div></section>`;
+  }
+  cont.innerHTML=html;
+}
+
 /* ============ init ============ */
 async function init(){
   document.getElementById('brandName').textContent=(SITE_NAME||'VAULT');
@@ -662,11 +744,33 @@ async function init(){
     }
   }
   DATA = loaded || DEMO;
+
+  let pr=null;
+  if(PROMPTS_CSV_URL && PROMPTS_CSV_URL.trim()){
+    try{ const r=await fetch(PROMPTS_CSV_URL); if(r.ok){ pr=rowsToPrompts(parseCSV(await r.text())); } }catch(e){}
+  }
+  PROMPTS = (pr && pr.length) ? pr : DEMO_PROMPTS;
+
   renderNav();
   renderMain();
 }
 
-document.getElementById('search').addEventListener('input',renderMain);
+document.getElementById('search').addEventListener('input',renderActive);
+document.querySelectorAll('#viewTabs button').forEach(b=>b.addEventListener('click',()=>{
+  activeView=b.dataset.view;
+  document.querySelectorAll('#viewTabs button').forEach(x=>x.classList.toggle('active',x===b));
+  const isP=activeView==='prompts';
+  document.getElementById('linksView').hidden=isP;
+  document.getElementById('promptsView').hidden=!isP;
+  document.getElementById('priceFilter').style.display=isP?'none':'';
+  document.getElementById('search').placeholder=isP?'rechercher une prompt…':'rechercher un site…';
+  renderActive();
+}));
+document.getElementById('promptsList').addEventListener('click',e=>{
+  const btn=e.target.closest('.prompt-copy'); if(!btn) return;
+  const txt=btn.closest('.prompt-card').querySelector('.prompt-text').textContent;
+  navigator.clipboard.writeText(txt).then(()=>{ const o=btn.textContent; btn.textContent='Copié ✓'; btn.classList.add('done'); setTimeout(()=>{btn.textContent=o;btn.classList.remove('done');},1500); }).catch(()=>{});
+});
 document.querySelectorAll('#priceFilter button').forEach(b=>b.addEventListener('click',()=>{
   activePrice=b.dataset.price;
   document.querySelectorAll('#priceFilter button').forEach(x=>x.classList.toggle('active',x===b));
