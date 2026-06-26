@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<!-- Invisible sur Google : seuls ceux qui ont le lien y accèdent -->
+<meta name="robots" content="noindex, nofollow, noarchive" />
+<meta name="googlebot" content="noindex, nofollow" />
+<title>VAULT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  /* =========================================================
+     CONFIG VISUELLE — identité Fluffy : near-black + cyan toxique
+     ========================================================= */
+  :root{
+    --bg:        #0A0B0D;
+    --surface:   #111316;
+    --surface-2: #15181C;
+    --line:      #20242B;
+    --line-soft: #181B20;
+    --text:      #E9EEF1;
+    --muted:     #7C8590;
+    --muted-2:   #565E68;
+    --cyan:      #25E0C0;
+    --cyan-soft: rgba(37,224,192,0.10);
+    --cyan-line: rgba(37,224,192,0.35);
+    --radius:    12px;
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+
+  html{ scroll-behavior:smooth; }
+
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',system-ui,-apple-system,sans-serif;
+    font-size:15px;
+    line-height:1.5;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+    position:relative;
+    overflow-x:hidden;
+  }
+
+  /* halo cyan + grille discrète = la signature */
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background:
+      radial-gradient(900px 500px at 78% -8%, var(--cyan-soft), transparent 60%),
+      radial-gradient(700px 400px at 0% 100%, rgba(37,224,192,0.04), transparent 55%);
+    pointer-events:none; z-index:0;
+  }
+  body::after{
+    content:"";
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(var(--line-soft) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+    background-size:46px 46px;
+    opacity:.4;
+    mask-image:radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+    pointer-events:none; z-index:0;
+  }
+
+  .wrap{ position:relative; z-index:1; max-width:1180px; margin:0 auto; padding:0 22px; }
+
+  /* ---------- HEADER ---------- */
+  header.top{
+    position:sticky; top:0; z-index:30;
+    background:rgba(10,11,13,0.82);
+    backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--line);
+  }
+  .top-inner{
+    max-width:1180px; margin:0 auto; padding:16px 22px;
+    display:flex; align-items:center; gap:22px; flex-wrap:wrap;
+  }
+  .brand{ display:flex; align-items:baseline; gap:0; user-select:none; }
+  .brand .name{
+    font-family:'Anton',sans-serif;
+    font-size:30px; letter-spacing:.5px; line-height:1;
+    text-transform:uppercase;
+  }
+  .brand .slash{ color:var(--cyan); font-family:'Anton',sans-serif; font-size:30px; }
+  .brand .tag{
+    font-family:'Space Mono',monospace; font-size:11px; color:var(--muted);
+    margin-left:12px; letter-spacing:.3px; align-self:center;
+  }
+  @media(max-width:620px){ .brand .tag{ display:none; } }
+
+  .search-box{ position:relative; flex:1; min-width:220px; }
+  .search-box .caret{
+    position:absolute; left:14px; top:50%; transform:translateY(-50%);
+    font-family:'Space Mono',monospace; color:var(--cyan); font-size:14px;
+  }
+  #search{
+    width:100%;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:10px;
+    color:var(--text);
+    font-family:'Space Mono',monospace; font-size:14px;
+    padding:11px 14px 11px 34px;
+    outline:none; transition:border-color .15s, box-shadow .15s;
+  }
+  #search::placeholder{ color:var(--muted-2); }
+  #search:focus{ border-color:var(--cyan-line); box-shadow:0 0 0 3px var(--cyan-soft); }
+  .kbd{
+    position:absolute; right:12px; top:50%; transform:translateY(-50%);
+    font-family:'Space Mono',monospace; font-size:11px; color:var(--muted-2);
+    border:1px solid var(--line); border-radius:5px; padding:2px 7px;
+    pointer-events:none;
+  }
+  @media(max-width:620px){ .kbd{ display:none; } }
+
+  .price-filter{ display:flex; gap:4px; background:var(--surface); border:1px solid var(--line); border-radius:9px; padding:3px; }
+  .price-filter button{ cursor:pointer; border:none; background:transparent; color:var(--muted);
+    font-family:'Space Mono',monospace; font-size:12px; padding:6px 12px; border-radius:6px; transition:all .14s; }
+  .price-filter button:hover{ color:var(--text); }
+  .price-filter button.active{ color:var(--bg); background:var(--cyan); font-weight:700; }
+  .price-filter button:focus-visible{ outline:2px solid var(--cyan); outline-offset:2px; }
+
+  .tile .t-row{ display:flex; align-items:center; gap:7px; min-width:0; }
+  .price{ flex:0 0 auto; font-family:'Space Mono',monospace; font-size:9.5px; letter-spacing:.2px;
+    padding:1px 6px; border-radius:4px; line-height:1.5; }
+  .price-g{ color:var(--cyan); background:var(--cyan-soft); }
+  .price-p{ color:#E8B23A; background:rgba(232,178,58,0.12); }
+  .price-f{ color:#9aa3ad; background:rgba(255,255,255,0.05); }
+
+  /* ---------- DEMO BANNER ---------- */
+  .demo-bar{
+    background:linear-gradient(90deg, var(--cyan-soft), transparent);
+    border-bottom:1px solid var(--cyan-line);
+    font-family:'Space Mono',monospace; font-size:12px; color:var(--text);
+    padding:9px 22px; text-align:center;
+  }
+  .demo-bar b{ color:var(--cyan); }
+  .demo-bar.hidden{ display:none; }
+
+  /* ---------- LAYOUT ---------- */
+  .layout{ display:grid; grid-template-columns:210px 1fr; gap:34px; padding:30px 0 80px; }
+  @media(max-width:820px){ .layout{ grid-template-columns:1fr; gap:18px; } }
+
+  /* ---------- NAV (catégories) ---------- */
+  nav.cats{ position:sticky; top:92px; align-self:start; }
+  .cats-title{
+    font-family:'Space Mono',monospace; font-size:11px; color:var(--muted-2);
+    text-transform:uppercase; letter-spacing:1.5px; margin-bottom:12px; padding-left:2px;
+  }
+  .cat-btn{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    width:100%; text-align:left; cursor:pointer;
+    background:transparent; border:none; border-left:2px solid transparent;
+    color:var(--muted); font-family:'Inter'; font-size:14px; font-weight:500;
+    padding:8px 10px; border-radius:0 7px 7px 0; transition:all .14s;
+  }
+  .cat-btn:hover{ color:var(--text); background:var(--surface); }
+  .cat-btn.active{ color:var(--cyan); border-left-color:var(--cyan); background:var(--surface); }
+  .cat-btn .count{ font-family:'Space Mono',monospace; font-size:11px; color:var(--muted-2); }
+  .cat-btn.active .count{ color:var(--cyan); }
+
+  /* sur mobile : chips horizontales */
+  @media(max-width:820px){
+    nav.cats{ position:static; }
+    .cats-title{ display:none; }
+    .cat-list{ display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; scrollbar-width:none; }
+    .cat-list::-webkit-scrollbar{ display:none; }
+    .cat-btn{
+      flex:0 0 auto; width:auto; border:1px solid var(--line); border-left:1px solid var(--line);
+      border-radius:999px; padding:7px 14px; white-space:nowrap;
+    }
+    .cat-btn.active{ border-color:var(--cyan-line); background:var(--cyan-soft); }
+  }
+
+  /* ---------- SECTIONS + TILES ---------- */
+  .cat-section{ margin-bottom:38px; }
+  .cat-head{ display:flex; align-items:baseline; gap:12px; margin-bottom:16px; }
+  .cat-head h2{
+    font-family:'Anton',sans-serif; font-size:22px; letter-spacing:.5px;
+    text-transform:uppercase; font-weight:400;
+  }
+  .cat-head .eyebrow{ font-family:'Space Mono',monospace; color:var(--cyan); font-size:14px; }
+  .cat-head .num{ font-family:'Space Mono',monospace; color:var(--muted-2); font-size:12px; }
+  .cat-head .rule{ flex:1; height:1px; background:var(--line); }
+
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:12px; }
+
+  .tile{
+    display:flex; align-items:flex-start; gap:13px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:13px 15px;
+    text-decoration:none; color:var(--text);
+    transition:border-color .15s, transform .15s, box-shadow .15s, background .15s;
+    position:relative;
+  }
+  .tile:hover{
+    border-color:var(--cyan-line);
+    background:var(--surface-2);
+    transform:translateY(-2px);
+    box-shadow:0 8px 26px -10px rgba(37,224,192,0.35);
+  }
+  .tile:focus-visible{ outline:2px solid var(--cyan); outline-offset:2px; }
+
+  .fav{
+    flex:0 0 34px; width:34px; height:34px; border-radius:8px;
+    background:var(--surface-2); border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;
+  }
+  .fav .letter{
+    font-family:'Space Mono',monospace; font-weight:700; font-size:15px; color:var(--cyan);
+    text-transform:uppercase;
+  }
+  .fav img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+
+  .tile .meta{ min-width:0; flex:1; }
+  .tile .t-name{ font-weight:600; font-size:14.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tile .t-desc{ font-size:12px; color:var(--muted); line-height:1.35; margin:2px 0 3px;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .tile .t-dom{ font-family:'Space Mono',monospace; font-size:11px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+  .tile .arrow{ color:var(--muted-2); font-size:14px; transition:color .15s, transform .15s; flex:0 0 auto; margin-top:2px; }
+  .tile:hover .arrow{ color:var(--cyan); transform:translate(2px,-2px); }
+  .tile .badge{
+    position:absolute; top:-7px; right:10px;
+    font-family:'Space Mono',monospace; font-size:9.5px; color:var(--bg); background:var(--cyan);
+    padding:1px 6px; border-radius:4px; font-weight:700; letter-spacing:.3px;
+  }
+
+  /* ---------- ÉTATS ---------- */
+  .state{ text-align:center; padding:80px 20px; color:var(--muted); font-family:'Space Mono',monospace; font-size:14px; }
+  .state .pulse{ color:var(--cyan); }
+  @keyframes blink{ 50%{ opacity:.25; } }
+  .pulse{ animation:blink 1s steps(2) infinite; }
+
+  footer{
+    border-top:1px solid var(--line); margin-top:30px; padding:26px 0 60px;
+    font-family:'Space Mono',monospace; font-size:12px; color:var(--muted-2); text-align:center;
+  }
+  footer b{ color:var(--cyan); }
+
+  @media(prefers-reduced-motion:reduce){
+    *{ transition:none !important; animation:none !important; scroll-behavior:auto; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ╔══════════════════════════════════════════════════════════╗
+     ║  CONFIG — c'est ICI que tu modifies. 3 lignes, rien d'autre. ║
+     ╚══════════════════════════════════════════════════════════╝ -->
+<script>
+  // 1) Colle entre les guillemets l'URL CSV publiée de ton Google Sheet.
+  //    (Sheet → Fichier → Partager → Publier sur le web → format CSV)
+  //    Laisse vide ("") pour rester en mode démo.
+  const SHEET_CSV_URL = "";
+
+  // 2) Le nom affiché en grand en haut.
+  const SITE_NAME = "VAULT";
+
+  // 3) La petite phrase à côté.
+  const TAGLINE = "tous nos liens, un seul endroit";
+</script>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <span class="name" id="brandName">VAULT</span><span class="slash">//</span>
+      <span class="tag" id="brandTag">tous nos liens, un seul endroit</span>
+    </div>
+    <div class="search-box">
+      <span class="caret">&gt;</span>
+      <input id="search" type="text" autocomplete="off" spellcheck="false" placeholder="rechercher un site…" aria-label="Rechercher un lien" />
+      <span class="kbd">/</span>
+    </div>
+    <div class="price-filter" id="priceFilter" role="group" aria-label="Filtrer par prix">
+      <button data-price="all" class="active">Tout</button>
+      <button data-price="gratuit">Gratuit</button>
+      <button data-price="payant">Payant</button>
+    </div>
+  </div>
+</header>
+
+<div class="demo-bar" id="demoBar">
+  197 liens de départ déjà intégrés. Pour ajouter à plusieurs (Rafael, Louka) → branche un Google Sheet via <b>SHEET_CSV_URL</b> en haut du fichier.
+</div>
+
+<div class="wrap">
+  <div class="layout">
+    <nav class="cats">
+      <div class="cats-title">Catégories</div>
+      <div class="cat-list" id="catList"></div>
+    </nav>
+    <main id="main">
+      <div class="state"><span class="pulse">█</span> chargement du vault…</div>
+    </main>
+  </div>
+</div>
+
+<footer>
+  <span id="footStats">—</span> · pour ajouter un lien → une ligne dans le <b>Google Sheet</b>, et ça apparaît ici.
+</footer>
+
+<script>
+/* ============ données de démo (remplacées dès que le Sheet est branché) ============ */
+const DEMO = [
+  ["IA / Génération","Ideogram","https://ideogram.ai","⭐","Génération d'images + typo stylée, sans crédits bloquants","Freemium"],
+  ["IA / Génération","Magnific","https://magnific.ai","","Upscale & enhance IA haut de gamme","Payant"],
+  ["IA / Génération","Krea","https://www.krea.ai","","Génération + upscale temps réel","Freemium"],
+  ["IA / Génération","Leonardo AI","https://leonardo.ai","","Génération d'images IA, contrôle fin","Freemium"],
+  ["IA / Génération","Midjourney","https://www.midjourney.com","","Génération d'images IA (qualité réf)","Payant"],
+  ["IA / Génération","Runway","https://runwayml.com","","IA vidéo + suppression de fond","Freemium"],
+  ["IA / Génération","ComfyUI","https://www.comfy.org","","Pipeline Stable Diffusion en nodes","Gratuit"],
+  ["IA / Génération","Magic Studio","https://magicstudio.com","","Retouche IA tout-en-un","Freemium"],
+  ["IA / Génération","Clipdrop","https://clipdrop.co","⭐","Relight, cleanup, upscale — top pour la lumière","Freemium"],
+  ["IA / Génération","Lexica","https://lexica.art","","Banque de prompts + images SD","Freemium"],
+  ["IA / Génération","PromptHero","https://prompthero.com","","Recherche de prompts par image","Freemium"],
+  ["IA / Génération","CivitAI","https://civitai.com","","Modèles & LoRA Stable Diffusion","Gratuit"],
+  ["IA / Génération","Emojis.sh","https://emojis.sh","","Générer des emojis custom","Freemium"],
+  ["IA / Génération","ChatGPT","https://chatgpt.com","","Idées, titres, accroches","Freemium"],
+  ["IA / Génération","Arena (IA free)","https://arena.ai","","Tester des modèles IA gratuitement","Gratuit"],
+  ["IA / Génération","AI Studio (Nano Banana Pro)","https://aistudio.google.com/prompts/new_chat?model=gemini-3-pro-image","⭐","Génération d'images Gemini 3 Pro (Nano Banana Pro)","Gratuit"],
+  ["Upscale","Upscayl","https://upscayl.org","⭐","Upscale open source, hors-ligne (Real-ESRGAN)","Gratuit"],
+  ["Upscale","Cutout.pro","https://www.cutout.pro","","Upscale + sharpen IA","Freemium"],
+  ["Upscale","Waifu2x","https://www.waifu2x.net","","Upscale + débruitage, idéal anime","Gratuit"],
+  ["Upscale","BigJPG","https://bigjpg.com","","Upscale illus / dessins / anime","Freemium"],
+  ["Upscale","Img2Go","https://www.img2go.com","","Upscale simple en ligne","Freemium"],
+  ["Upscale","MagicHour","https://magichour.ai","","Upscale 4x–8x rapide, sans install","Freemium"],
+  ["Upscale","Upscale.media","https://www.upscale.media","","Upscale rapide 2x–4x","Freemium"],
+  ["Upscale","Let's Enhance","https://letsenhance.io","","Upscale + amélioration couleurs auto","Freemium"],
+  ["Upscale","ImgUpscaler","https://imgupscaler.com","","Upscale jusqu'à 16K","Freemium"],
+  ["Upscale","Fotor Upscaler","https://www.fotor.com/features/image-upscaler/","","Upscale accessible + retouche","Freemium"],
+  ["Upscale","Pixlr","https://pixlr.com","","Éditeur en ligne + upscale","Freemium"],
+  ["Upscale","TinyWow","https://tinywow.com","","Upscale & outils, sans compte","Freemium"],
+  ["Upscale","Lupa Upscaler","https://app.lupaupscaler.com","","Upscale en ligne","Freemium"],
+  ["Upscale","AdventureGen","https://www.adventuregen.ai","","Upscale IA","Freemium"],
+  ["Détourage / PNG / Vecto","Remove.bg","https://www.remove.bg","","Enlever le fond en 1 clic","Freemium"],
+  ["Détourage / PNG / Vecto","PNGEgg","https://www.pngegg.com","⭐","PNG transparents pour montages","Gratuit"],
+  ["Détourage / PNG / Vecto","PNGTree","https://pngtree.com","","Banque de PNG, fonds, vecteurs, templates","Freemium"],
+  ["Détourage / PNG / Vecto","Vector Magic","https://vectormagic.com","","Convertir PNG/JPG en vectoriel (SVG/EPS)","Payant"],
+  ["Détourage / PNG / Vecto","AutoDraw","https://www.autodraw.com","","Transformer un gribouillis en icône propre","Gratuit"],
+  ["Détourage / PNG / Vecto","Icons8","https://icons8.com","","Icônes + illus 3D","Freemium"],
+  ["Détourage / PNG / Vecto","Flaticon","https://www.flaticon.com","","Banque d'icônes","Freemium"],
+  ["Détourage / PNG / Vecto","Streamline Icons","https://www.streamlinehq.com","","Énorme bibliothèque d'icônes","Freemium"],
+  ["Stock / B-roll","Pexels","https://www.pexels.com","","Photos + vidéos libres de droits","Gratuit"],
+  ["Stock / B-roll","Unsplash","https://unsplash.com","","Photos HD gratuites","Gratuit"],
+  ["Stock / B-roll","Pixabay","https://pixabay.com","","Images + vidéos libres","Gratuit"],
+  ["Stock / B-roll","Mixkit","https://mixkit.co","⭐","Vidéo stock + musiques + SFX gratuits","Gratuit"],
+  ["Stock / B-roll","Freepik","https://www.freepik.com","","Vecteurs, PSD, photos","Freemium"],
+  ["Stock / B-roll","Vecteezy","https://www.vecteezy.com","","Vecteurs + stock","Freemium"],
+  ["Stock / B-roll","Envato Elements","https://elements.envato.com","","Assets premium (abo)","Payant"],
+  ["Stock / B-roll","StockCake","https://stockcake.com","","Photos stock gratuites","Gratuit"],
+  ["Textures / Lumière","Poly Haven","https://polyhaven.com","","HDRI, textures, modèles 3D gratuits","Gratuit"],
+  ["Textures / Lumière","Synthevisuals","https://synthevisuals.gumroad.com","⭐","Textures 8K gratuites (Gumroad)","Gratuit"],
+  ["Typo / Polices","Google Fonts","https://fonts.google.com","","Polices gratuites","Gratuit"],
+  ["Typo / Polices","DaFont","https://www.dafont.com","","Télécharger des polices","Gratuit"],
+  ["Typo / Polices","Font Squirrel","https://www.fontsquirrel.com","","Polices gratuites usage commercial","Gratuit"],
+  ["Typo / Polices","WhatFontIs","https://www.whatfontis.com","","Identifier une police depuis une image","Freemium"],
+  ["Typo / Polices","WhatTheFont","https://www.myfonts.com/pages/whatthefont","","Reconnaissance de police","Gratuit"],
+  ["Typo / Polices","Kittl","https://www.kittl.com","","Design typo + templates","Freemium"],
+  ["Couleurs","Coolors","https://coolors.co","","Générateur de palettes","Freemium"],
+  ["Couleurs","Adobe Color","https://color.adobe.com","","Palettes + roue chromatique","Gratuit"],
+  ["Mockups","Smartmockups","https://smartmockups.com","","Mockups produits","Freemium"],
+  ["Mockups","Mockup World","https://www.mockupworld.co","","Mockups gratuits","Gratuit"],
+  ["Compression","TinyPNG","https://tinypng.com","","Compresser PNG/JPG (20 Mo)","Gratuit"],
+  ["Compression","Squoosh","https://squoosh.app","","Compresser + convertir","Gratuit"],
+  ["Miniatures / YT","Thumbsup.tv","https://thumbsup.tv","⭐","Prévisualiser ta mini dans le feed YT","Freemium"],
+  ["Miniatures / YT","PrevYou (extension)","https://chromewebstore.google.com/detail/prevyou-—-youtube-thumba/lnkbdmjocdiomabiedmflmgikjlifham","","Aperçu miniature dans YouTube","Gratuit"],
+  ["Miniatures / YT","ViewStats","https://www.viewstats.com","","Stats & analyse de chaînes","Freemium"],
+  ["Miniatures / YT","YouTube Studio","https://studio.youtube.com","","Analytics de ta chaîne","Gratuit"],
+  ["Miniatures / YT","Tweetpik","https://tweetpik.com","","Transformer un tweet en visuel","Freemium"],
+  ["Extensions","Ostendo (Chrome)","https://chromewebstore.google.com/detail/ostendo-–-capture-beautif/bdfkognhpfgcoafcncpdgpjlbhoigpil","⭐","Captures vidéo YouTube stylées","Gratuit"],
+  ["Extensions","Ostendo (Firefox)","https://addons.mozilla.org/fr/firefox/addon/ostendo-youtube-screenshots/","","Captures vidéo YouTube stylées","Gratuit"],
+  ["Extensions","Screenshot YouTube","https://chromewebstore.google.com/detail/screenshot-youtube/gjoijpfmdhbjkkgnmahganhoinjjpohk","","Screenshot d'une vidéo en 1 clic","Gratuit"],
+  ["Extensions","Recherche par image","https://smallseotools.com/reverse-image-search/","","Recherche d'image inversée","Gratuit"],
+  ["Inspiration","Behance","https://www.behance.net","","Portfolios pros (Adobe)","Gratuit"],
+  ["Inspiration","Dribbble","https://dribbble.com","","Inspiration design","Gratuit"],
+  ["Inspiration","Pinterest","https://www.pinterest.com","","Moodboard / inspi visuelle","Gratuit"],
+  ["Inspiration","Hoko Design","https://www.hoko.design","","Inspi portfolio","Gratuit"],
+  ["Motion / Photoshop","Photoshop","https://www.adobe.com/products/photoshop.html","","Compositing principal","Payant"],
+  ["Motion / Photoshop","Mister Horse","https://misterhorse.com","","Packs assets AE / Premiere","Freemium"],
+  ["Motion / Photoshop","Jitter","https://jitter.video","","Templates motion exportables","Freemium"],
+  ["Motion / Photoshop","Halftone Maker","https://halftonemaker.com","","Effet trame / halftone","Gratuit"],
+  ["Divers","Notion","https://www.notion.so","","Planning client","Freemium"],
+  ["Divers","Template Portfolio (MrCesano)","https://systeme.io/funnel/share/13066941493e9e3485d1d56dba007b0976ef681","","Template de portfolio","Gratuit"],
+  ["Tutos / Chaînes","AziaTack","https://www.youtube.com/@AziaTack/videos","⭐","Chaîne tuto Photoshop FR","Gratuit"],
+  ["Tutos / Chaînes","Bitchi sensei","https://www.youtube.com/@bitchiskk","","Chaîne miniature Photoshop FR","Gratuit"],
+  ["Tutos / Chaînes","Wade","https://youtu.be/2j5Xu906Xhg","","Tuto : positions parfaites miniatures","Gratuit"],
+  ["Tutos / Chaînes","PLASS","https://youtu.be/0y83P1eQXGg","","Tuto : meilleurs outils miniamaker 2026","Gratuit"],
+  ["Tutos / Chaînes","cubi","https://www.youtube.com/watch?v=CxpNkfO-CJk","","Tuto : toutes les bases Photoshop 2026","Gratuit"],
+  ["Tutos / Chaînes","Seemy","https://youtu.be/HwArSPZBXwY","","Tuto : perspectives sur Photoshop","Gratuit"],
+  ["Éditeurs image","Photopea","https://www.photopea.com","⭐","Alternative Photoshop dans le navigateur","Gratuit"],
+  ["Éditeurs image","GIMP","https://www.gimp.org","","Éditeur image FOSS (alt Photoshop)","Gratuit"],
+  ["Éditeurs image","Krita","https://krita.org","⭐","Peinture & dessin numérique FOSS","Gratuit"],
+  ["Éditeurs image","Inkscape","https://inkscape.org","","Éditeur vectoriel FOSS","Gratuit"],
+  ["Éditeurs image","Affinity","https://affinity.serif.com","","Suite créative (alt Adobe)","Freemium"],
+  ["Éditeurs image","Lunapic","https://lunapic.com","","Éditeur multi-outils en ligne","Gratuit"],
+  ["Éditeurs image","Polarr","https://photoeditor.polarr.co","","Éditeur photo multi-outils","Freemium"],
+  ["Éditeurs image","iLoveIMG","https://www.iloveimg.com/photo-editor","","Outils image simples en ligne","Freemium"],
+  ["Éditeurs image","Croppola","https://croppola.com","","Recadrage automatique","Gratuit"],
+  ["Éditeurs image","Image Splitter","https://ruyili.ca/image-splitter/","","Découper une image en tuiles","Gratuit"],
+  ["Éditeurs image","PicFont","https://picfont.com","","Ajouter du texte sur une image","Gratuit"],
+  ["Éditeurs image","fffuel","https://fffuel.co","⭐","Générateurs SVG : couleurs, formes, dégradés","Gratuit"],
+  ["Détourage / PNG / Vecto","ObjectRemover","https://objectremover.com","","Supprimer un objet d'une image","Freemium"],
+  ["Détourage / PNG / Vecto","Inpaint","https://theinpaint.com","","Retirer éléments indésirables","Freemium"],
+  ["Détourage / PNG / Vecto","Pixelcut","https://www.pixelcut.ai","","Détourage + outils produit","Freemium"],
+  ["Détourage / PNG / Vecto","BG Bye","https://bgbye.io","","Détourage gratuit (multi-modèles)","Gratuit"],
+  ["Upscale","WaifuXL","https://waifuxl.com","","Upscale anime en ligne","Gratuit"],
+  ["Upscale","OpenModelDB","https://openmodeldb.info","","Base de modèles d'upscale IA","Gratuit"],
+  ["Upscale","Image Upscaling","https://image-upscaling.net","","Upscale en ligne","Gratuit"],
+  ["Effets / Glitch","Mosh","https://moshpro.app","⭐","Effet glitch / datamosh","Freemium"],
+  ["Effets / Glitch","glitch2","https://akx.github.io/glitch2/","","Glitch d'image","Gratuit"],
+  ["Effets / Glitch","PhotoFunia","https://photofunia.com","","Effets photo & filtres","Gratuit"],
+  ["Effets / Glitch","shabzefilters","https://shabzefilters.netlify.app","","Filtres ASCII, dot, braille, blocs","Gratuit"],
+  ["Effets / Glitch","VHS-Engine","https://vhs-engine.netlify.app","","Effet VHS rétro","Gratuit"],
+  ["Effets / Glitch","Palettum","https://palettum.com","","Appliquer une palette custom (image/GIF)","Gratuit"],
+  ["Effets / Glitch","Geometrize","https://www.geometrize.co.uk","","Redessiner en formes géométriques","Gratuit"],
+  ["Effets / Glitch","Dither Me This","https://doodad.dev/dither-me-this/","","Dithering / effet bitmap","Gratuit"],
+  ["Effets / Glitch","FiniteCurve","https://www.finitecurve.com","","Photo transformée en line art","Gratuit"],
+  ["Pixel Art","Aseprite","https://www.aseprite.org","⭐","Éditeur pixel art (référence)","Payant"],
+  ["Pixel Art","Piskel","https://www.piskelapp.com","","Éditeur pixel art en ligne","Gratuit"],
+  ["Pixel Art","LibreSprite","https://libresprite.github.io","","Éditeur pixel art FOSS","Gratuit"],
+  ["Pixel Art","PixilArt","https://www.pixilart.com/draw","","Pixel art dans le navigateur","Gratuit"],
+  ["Pixel Art","Pixel It","https://giventofly.github.io/pixelit/","","Convertir une image en pixel art","Gratuit"],
+  ["Dessin / Peinture","tldraw","https://www.tldraw.com","","Tableau blanc / croquis rapide","Gratuit"],
+  ["Dessin / Peinture","Kleki","https://kleki.com","","Dessin en ligne simple","Gratuit"],
+  ["Dessin / Peinture","Perspective Tools","https://perspectivetools.com","⭐","Grilles de perspective interactives","Gratuit"],
+  ["Apps de design","Figma","https://www.figma.com","⭐","Design & maquettes collaboratif","Freemium"],
+  ["Apps de design","Canva","https://www.canva.com","","Design tout-en-un","Freemium"],
+  ["Apps de design","Penpot","https://penpot.app","","Design & prototypage FOSS","Gratuit"],
+  ["Apps de design","Pixelied","https://pixelied.com","","Outil de design en ligne","Freemium"],
+  ["Inspiration","archives.design","https://archives.design","","Archive de design graphique","Gratuit"],
+  ["Inspiration","Muzli","https://search.muz.li","","Inspiration design","Gratuit"],
+  ["Inspiration","Cosmos","https://www.cosmos.so","⭐","Curation visuelle / moodboard","Gratuit"],
+  ["Inspiration","One Page Love","https://onepagelove.com","","Inspi sites one-page","Gratuit"],
+  ["Inspiration","CARI","https://cari.institute","","Histoire des esthétiques visuelles","Gratuit"],
+  ["Inspiration","SMPoster","https://www.smposter.com","","Designs d'affiches","Gratuit"],
+  ["Inspiration","AnotherGraphic","https://anothergraphic.org","","Designs typographiques","Gratuit"],
+  ["Icônes / Avatars / Logos","RealFaviconGenerator","https://realfavicongenerator.net","","Générateur de favicon","Gratuit"],
+  ["Icônes / Avatars / Logos","Worldvectorlogo","https://worldvectorlogo.com","","Logos en vectoriel","Gratuit"],
+  ["Icônes / Avatars / Logos","seeklogo","https://seeklogo.com","","Recherche de logos","Freemium"],
+  ["Icônes / Avatars / Logos","SuperTinyIcons","https://edent.github.io/SuperTinyIcons/","","Logos SVG ultra-légers","Gratuit"],
+  ["Icônes / Avatars / Logos","Picrew","https://picrew.me/en","","Créateur d'avatar","Gratuit"],
+  ["Icônes / Avatars / Logos","Avatar Maker","https://avatarmaker.com","","Créateur d'avatar simple","Gratuit"],
+  ["Icônes / Avatars / Logos","MultiAvatar","https://multiavatar.com","","Avatars aléatoires","Gratuit"],
+  ["Textures / Lumière","AmbientCG","https://ambientcg.com","⭐","Textures PBR gratuites","Gratuit"],
+  ["Textures / Lumière","cgbookcase","https://www.cgbookcase.com","","Textures PBR gratuites","Gratuit"],
+  ["Textures / Lumière","Texture Ninja","https://texture.ninja","","Textures photo gratuites","Gratuit"],
+  ["Textures / Lumière","Texture Labs","https://texturelabs.org","","Textures haute résolution","Gratuit"],
+  ["Textures / Lumière","Transparent Textures","https://www.transparenttextures.com","","Textures de fond légères","Gratuit"],
+  ["Textures / Lumière","Subtle Patterns","https://www.toptal.com/designers/subtlepatterns/","","Patterns de fond discrets","Gratuit"],
+  ["Textures / Lumière","BGJar","https://bgjar.com","","Générateur de fonds SVG","Gratuit"],
+  ["Textures / Lumière","MeshGradient","https://meshgradient.in","","Générateur de dégradés mesh","Gratuit"],
+  ["Textures / Lumière","Haikei","https://app.haikei.app","⭐","Générateur de formes & fonds SVG","Gratuit"],
+  ["Textures / Lumière","Trianglify","https://trianglify.io","","Fonds low-poly","Gratuit"],
+  ["Textures / Lumière","Pattern Ninja","https://patterninja.com","","Créer des motifs / patterns","Gratuit"],
+  ["Assets gratuits","Freesets","https://freesets.dev","","Index de ressources design gratuites","Gratuit"],
+  ["Assets gratuits","Unblast","https://unblast.com","","Mockups, fonts, templates gratuits","Gratuit"],
+  ["Assets gratuits","OnlyGFX","https://www.onlygfx.com","","Textures, brushes, PNG gratuits","Gratuit"],
+  ["Assets gratuits","TitanUI","https://www.titanui.com","","UI kits & PSD gratuits","Gratuit"],
+  ["Assets gratuits","Designer Candies","https://designercandies.net/category/freebies/","","Freebies design","Gratuit"],
+  ["Assets gratuits","PSDGraphics","https://www.psdgraphics.com","","Fichiers PSD gratuits","Gratuit"],
+  ["Assets gratuits","Placeit","https://placeit.net","","Templates & mockups","Freemium"],
+  ["Assets gratuits","MariaLetta Doodles","https://github.com/MariaLetta/mega-doodles-pack","","Pack de doodles gratuits","Gratuit"],
+  ["Recherche image","Yandex Images","https://yandex.com/images/","⭐","Recherche d'image (très efficace)","Gratuit"],
+  ["Recherche image","Google Lens","https://lens.google","","Recherche d'image inversée","Gratuit"],
+  ["Recherche image","TinEye","https://tineye.com","","Recherche d'image inversée","Gratuit"],
+  ["Recherche image","SauceNao","https://saucenao.com","","Retrouver la source (art / anime)","Gratuit"],
+  ["Recherche image","Copyseeker","https://copyseeker.net","","Recherche d'image inversée","Gratuit"],
+  ["Recherche image","Multicolr","https://labs.tineye.com/multicolr/","","Recherche d'image par couleur","Gratuit"],
+  ["Recherche image","trace.moe","https://trace.moe","","Retrouver l'anime d'une image","Gratuit"],
+  ["Recherche image","Pose Search","https://x6ud.github.io/pose-search/","","Recherche de poses de référence","Gratuit"],
+  ["Recherche image","same.energy","https://same.energy","","Moteur de recherche visuel","Gratuit"],
+  ["Stock / B-roll","Adobe Stock (free)","https://stock.adobe.com/free","","Images gratuites Adobe","Gratuit"],
+  ["Stock / B-roll","Lummi","https://www.lummi.ai","","Photos stock générées par IA","Gratuit"],
+  ["Stock / B-roll","PxHere","https://pxhere.com","","Photos CC0","Gratuit"],
+  ["Stock / B-roll","Pikwizard","https://pikwizard.com","","Photos libres de droits","Gratuit"],
+  ["Stock / B-roll","Hippopx","https://www.hippopx.com","","Photos CC0","Gratuit"],
+  ["Stock / B-roll","Burst","https://www.shopify.com/stock-photos","","Photos stock gratuites (Shopify)","Gratuit"],
+  ["Stock / B-roll","Smithsonian Open Access","https://www.si.edu/OpenAccess","","Images HD du Smithsonian","Gratuit"],
+  ["Stock / B-roll","PNGIMG","https://pngimg.com","","PNG transparents","Gratuit"],
+  ["Stock / B-roll","twnsnd","https://nos.twnsnd.co","","Photos vintage domaine public","Gratuit"],
+  ["Stock / B-roll","publicdomainvectors","https://publicdomainvectors.org","","Vecteurs domaine public","Gratuit"],
+  ["Illustrations / Art","ArtStation","https://www.artstation.com","⭐","Portfolios & art pro","Gratuit"],
+  ["Illustrations / Art","Pixiv","https://www.pixiv.net","","Fanart japonais","Gratuit"],
+  ["Illustrations / Art","DeviantArt","https://www.deviantart.com","","Art communautaire","Gratuit"],
+  ["Illustrations / Art","Cara","https://cara.app","","Réseau d'artistes","Gratuit"],
+  ["Illustrations / Art","unDraw","https://undraw.co/illustrations","","Illustrations vectorielles gratuites","Gratuit"],
+  ["Illustrations / Art","StorySet","https://storyset.com","","Illustrations personnalisables","Gratuit"],
+  ["Illustrations / Art","manypixels","https://www.manypixels.co/gallery","","Illustrations gratuites","Gratuit"],
+  ["Réfs / Poses","PoseMy.art","https://app.posemy.art","⭐","Poses 3D de référence","Freemium"],
+  ["Réfs / Poses","JustSketchMe","https://justsketch.me","","Mannequin 3D pour poses","Freemium"],
+  ["Réfs / Poses","Magic Poser","https://magicposer.com","","Poses de personnages 3D","Freemium"],
+  ["Réfs / Poses","Quickposes","https://quickposes.com/en","","Références de pose chronométrées","Gratuit"],
+  ["Réfs / Poses","Adorkastock","https://www.adorkastock.com","","Photos de pose de référence","Gratuit"],
+  ["3D","Blender","https://www.blender.org","⭐","Modélisation 3D FOSS","Gratuit"],
+  ["3D","Sketchfab","https://sketchfab.com","","Catalogue de modèles 3D","Freemium"],
+  ["3D","poly.pizza","https://poly.pizza","","Modèles 3D low-poly gratuits","Gratuit"],
+  ["3D","Meshy.ai","https://www.meshy.ai","","Génération de modèles 3D par IA","Freemium"],
+  ["3D","Skybox","https://skybox.blockadelabs.com","","Environnements 3D générés par IA","Freemium"],
+  ["3D","Womp","https://beta.womp.com","","Modélisation 3D en ligne","Freemium"],
+  ["3D","Vectary","https://www.vectary.com","","Modélisation 3D en ligne","Freemium"],
+  ["Extensions","svgexport","https://svgexport.io","","Exporter du SVG en PNG","Gratuit"],
+];
+
+/* ============ mini-parseur CSV (gère guillemets, virgules, retours ligne) ============ */
+function parseCSV(text){
+  const rows=[]; let row=[], val='', q=false;
+  text=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){
+      if(c==='"'){ if(text[i+1]==='"'){ val+='"'; i++; } else q=false; }
+      else val+=c;
+    } else {
+      if(c==='"') q=true;
+      else if(c===','){ row.push(val); val=''; }
+      else if(c==='\n'){ row.push(val); rows.push(row); row=[]; val=''; }
+      else val+=c;
+    }
+  }
+  if(val!==''||row.length){ row.push(val); rows.push(row); }
+  return rows.filter(r=>r.some(c=>c.trim()!==''));
+}
+
+/* mappe les colonnes par nom d'en-tête (souple : FR/EN, accents) */
+function rowsToData(rows){
+  if(!rows.length) return [];
+  const norm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+  const head=rows[0].map(norm);
+  const find=(...names)=>{ for(const n of names){ const i=head.indexOf(n); if(i>=0) return i; } return -1; };
+  const ci=find('categorie','category','cat');
+  const ni=find('nom','name','titre','title');
+  const li=find('lien','link','url');
+  const di=find('description','desc','infos','utilite');
+  const ti=find('tag','badge');
+  const pi=find('prix','price','tarif');
+  // si pas d'en-tête reconnu, on suppose ordre : cat, nom, lien, description, tag, prix
+  const c=ci<0?0:ci, n=ni<0?1:ni, l=li<0?2:li, d=di<0?3:di, t=ti<0?4:ti, pp=pi<0?5:pi;
+  const start=(ci<0&&ni<0&&li<0)?0:1;
+  const out=[];
+  for(let i=start;i<rows.length;i++){
+    const r=rows[i];
+    const cat=(r[c]||'').trim(), name=(r[n]||'').trim(), url=(r[l]||'').trim();
+    if(!name||!url) continue;
+    out.push([cat||'Autres', name, url, (r[t]||'').trim(), (r[d]||'').trim(), (r[pp]||'').trim()]);
+  }
+  return out;
+}
+
+/* ============ rendu ============ */
+let DATA=[], activeCat='all', activePrice='all';
+
+function priceKind(px){ const p=(px||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  if(p.startsWith('grat')||p==='free') return 'gratuit';
+  if(p.startsWith('pay')||p==='paid') return 'payant';
+  if(p.startsWith('free')||p.startsWith('free')||p.includes('mium')||p.includes('deux')||p==='both') return 'freemium';
+  return ''; }
+function priceMatch(px){ const k=priceKind(px);
+  if(activePrice==='all'||!k) return true;
+  if(activePrice==='gratuit') return k==='gratuit'||k==='freemium';
+  if(activePrice==='payant')  return k==='payant'||k==='freemium';
+  return true; }
+function priceFiltered(){ return DATA.filter(r=>priceMatch(r[5])); }
+
+function domainOf(url){ try{ return new URL(url).hostname.replace(/^www\./,''); }catch{ return url.replace(/^https?:\/\//,'').split('/')[0]; } }
+function favUrl(url){ return 'https://www.google.com/s2/favicons?domain='+encodeURIComponent(domainOf(url))+'&sz=64'; }
+
+function catsFrom(data){
+  const m=new Map();
+  data.forEach(([cat])=>m.set(cat,(m.get(cat)||0)+1));
+  return [...m.entries()];
+}
+
+function renderNav(){
+  const el=document.getElementById('catList');
+  const base=priceFiltered();
+  const cats=catsFrom(base);
+  let html=`<button class="cat-btn ${activeCat==='all'?'active':''}" data-cat="all"><span>Tout</span><span class="count">${base.length}</span></button>`;
+  cats.sort((a,b)=>b[1]-a[1]).forEach(([c,n])=>{
+    html+=`<button class="cat-btn ${activeCat===c?'active':''}" data-cat="${escAttr(c)}"><span>${esc(c)}</span><span class="count">${n}</span></button>`;
+  });
+  el.innerHTML=html;
+  el.querySelectorAll('.cat-btn').forEach(b=>b.onclick=()=>{ activeCat=b.dataset.cat; renderNav(); renderMain(); });
+}
+
+function renderMain(){
+  const q=document.getElementById('search').value.trim().toLowerCase();
+  const main=document.getElementById('main');
+  let list=priceFiltered().filter(([cat])=> activeCat==='all'||cat===activeCat);
+  if(q) list=list.filter(([cat,name,url,tag,desc])=>(name+' '+cat+' '+(desc||'')+' '+domainOf(url)).toLowerCase().includes(q));
+
+  if(!list.length){
+    main.innerHTML=`<div class="state">aucun lien ne correspond${q?' à « '+esc(q)+' »':''}.</div>`;
+    updateStats();
+    return;
+  }
+  // groupe par catégorie en gardant l'ordre du nav
+  const order=['all',...catsFrom(priceFiltered()).sort((a,b)=>b[1]-a[1]).map(c=>c[0])];
+  const groups=new Map();
+  list.forEach(item=>{ const c=item[0]; if(!groups.has(c)) groups.set(c,[]); groups.get(c).push(item); });
+  const cats=[...groups.keys()].sort((a,b)=>order.indexOf(a)-order.indexOf(b));
+
+  let html='';
+  cats.forEach(c=>{
+    const items=groups.get(c);
+    html+=`<section class="cat-section"><div class="cat-head"><span class="eyebrow">//</span><h2>${esc(c)}</h2><span class="num">${items.length}</span><span class="rule"></span></div><div class="grid">`;
+    items.forEach(([cat,name,url,tag,desc,prix])=>{
+      const dom=domainOf(url);
+      const badge=tag?`<span class="badge">${esc(tag)}</span>`:'';
+      const k=priceKind(prix);
+      const pmap={gratuit:['price-g','Gratuit'],payant:['price-p','Payant'],freemium:['price-f','Freemium']};
+      const pill=pmap[k]?`<span class="price ${pmap[k][0]}">${pmap[k][1]}</span>`:'';
+      html+=`<a class="tile" href="${escAttr(url)}" target="_blank" rel="noopener noreferrer">
+        ${badge}
+        <span class="fav"><span class="letter">${esc((name[0]||'?'))}</span><img src="${favUrl(url)}" alt="" loading="lazy" onerror="this.remove()"></span>
+        <span class="meta"><span class="t-name">${esc(name)}</span>${desc?`<span class="t-desc">${esc(desc)}</span>`:""}<span class="t-row"><span class="t-dom">${esc(dom)}</span>${pill}</span></span>
+        <span class="arrow">↗</span>
+      </a>`;
+    });
+    html+=`</div></section>`;
+  });
+  main.innerHTML=html;
+  updateStats(list.length);
+}
+
+function updateStats(shown){
+  const cats=catsFrom(DATA).length;
+  const s=shown===undefined?DATA.length:shown;
+  document.getElementById('footStats').innerHTML=`<b>${DATA.length}</b> liens · <b>${cats}</b> catégories`;
+}
+
+function esc(s){ return (s+'').replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+function escAttr(s){ return (s+'').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+/* ============ init ============ */
+async function init(){
+  document.getElementById('brandName').textContent=(SITE_NAME||'VAULT');
+  document.title=(SITE_NAME||'VAULT');
+  document.getElementById('brandTag').textContent=(TAGLINE||'');
+
+  let loaded=null;
+  if(SHEET_CSV_URL && SHEET_CSV_URL.trim()){
+    document.getElementById('demoBar').classList.add('hidden');
+    try{
+      const res=await fetch(SHEET_CSV_URL);
+      if(!res.ok) throw new Error(res.status);
+      loaded=rowsToData(parseCSV(await res.text()));
+      if(!loaded.length) throw new Error('vide');
+    }catch(e){
+      document.getElementById('main').innerHTML=
+        `<div class="state">impossible de lire le Sheet (${esc(e.message)}).<br>vérifie qu'il est bien <b>publié sur le web en CSV</b>, puis recharge.</div>`;
+      return;
+    }
+  }
+  DATA = loaded || DEMO;
+  renderNav();
+  renderMain();
+}
+
+document.getElementById('search').addEventListener('input',renderMain);
+document.querySelectorAll('#priceFilter button').forEach(b=>b.addEventListener('click',()=>{
+  activePrice=b.dataset.price;
+  document.querySelectorAll('#priceFilter button').forEach(x=>x.classList.toggle('active',x===b));
+  renderNav(); renderMain();
+}));
+document.addEventListener('keydown',e=>{
+  if(e.key==='/' && document.activeElement.id!=='search'){ e.preventDefault(); document.getElementById('search').focus(); }
+  if(e.key==='Escape' && document.activeElement.id==='search'){ document.getElementById('search').value=''; renderMain(); document.getElementById('search').blur(); }
+});
+
+init();
+</script>
+</body>
+</html>
