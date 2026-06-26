@@ -509,8 +509,12 @@ const DEMO = [
 
 /* ============ mini-parseur CSV (gère guillemets, virgules, retours ligne) ============ */
 function parseCSV(text){
+  text=text.replace(/^\uFEFF/,'').replace(/\r\n/g,'\n').replace(/\r/g,'\n'); // enlève le BOM + normalise les retours
+  // détecte le séparateur d'après la 1re ligne : CSV (virgule), TSV (tabulation) ou point-virgule
+  const first=text.split('\n')[0]||'';
+  const nC=(first.match(/,/g)||[]).length, nT=(first.match(/\t/g)||[]).length, nS=(first.match(/;/g)||[]).length;
+  let DELIM=','; if(nT>nC&&nT>=nS) DELIM='\t'; else if(nS>nC) DELIM=';';
   const rows=[]; let row=[], val='', q=false;
-  text=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
   for(let i=0;i<text.length;i++){
     const c=text[i];
     if(q){
@@ -518,7 +522,7 @@ function parseCSV(text){
       else val+=c;
     } else {
       if(c==='"') q=true;
-      else if(c===','){ row.push(val); val=''; }
+      else if(c===DELIM){ row.push(val); val=''; }
       else if(c==='\n'){ row.push(val); rows.push(row); row=[]; val=''; }
       else val+=c;
     }
